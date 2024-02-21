@@ -1,9 +1,6 @@
-# from django.contrib import admin
+from django.contrib import admin
+from .models import *
 
-# from .models import *
-
-# admin.site.register(Services, ServicesAdmin)
-# admin.site.register(Users, UsersAdmin)
-# admin.site.register(Bid)
-# admin.site.register(BidRecord, BidRecordAdmin)
-# admin.site.register(BidStatus)
+admin.site.register(Service, ServiceAdmin)
+admin.site.register(User, UserAdmin)
+admin.site.register(Bid, BidAdmin)

@@ -1,104 +1,115 @@
-# from django.contrib import admin
-# from django.db import models
-# from django.urls import reverse
+from django.contrib import admin
+from django.db import models
+from django.urls import reverse
 
 
-# class BidAdmin(models.Model):
-#     list_display = ('users', 'moderator', 'date_create', 'date_formation', 'date_finish', 'status')
+class User(models.Model):
+    username = models.CharField(max_length=150, unique=True, verbose_name="Никнейм")
+    name = models.CharField(max_length=150, verbose_name='Имя')
+    surname = models.CharField(max_length=150, verbose_name='Фамилия')
+    email = models.CharField(max_length=150, unique=True, verbose_name="Электронная почта")
+    phone = models.CharField(max_length=30, unique=True, verbose_name="Номер телефона")
+    password = models.CharField(max_length=150, verbose_name='Пароль')
+    isAdmin = models.BooleanField(default=False, verbose_name='Является модератором')
+
+    class Meta:
+        managed = True
+        db_table = 'User'
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+    def __str__(self):
+        return self.username
 
 
-# class Bid(models.Model):
-#     user = models.ForeignKey('Users', models.DO_NOTHING, verbose_name='ID пользователя')
-#     moderator = models.ForeignKey('Users', models.DO_NOTHING, related_name='bid_moderator_set',
-#                                   blank=True, null=True, verbose_name='ID модератора')
-#     date_create = models.DateField(blank=True, null=True, verbose_name='Время создания')
-#     date_formation = models.DateField(blank=True, null=True, verbose_name='Время формирования')
-#     date_finish = models.DateField(blank=True, null=True, verbose_name='Время завершения')
-#     status = models.ForeignKey('BidStatus', models.DO_NOTHING, blank=True, null=True, verbose_name='Статус')
+class Service(models.Model):
+    MALE = "M"
+    FEMALE = "F"
+    ANYONE = "A"
+    SEX = {
+        MALE: "Мужской",
+        FEMALE: "Женский",
+        ANYONE: "Любой"
+    }
+    job = models.CharField(max_length=150, verbose_name='Название профессии')
+    img = models.ImageField(upload_to="users/", blank=True, verbose_name='Фотография')
+    about = models.TextField(verbose_name='Описание работы')
+    age = models.IntegerField(default=14,
+                              verbose_name='Возраст')  # с 14 лет можно стать самозанятым с согласия родителей
+    sex = models.CharField(max_length=1, choices=SEX, default=ANYONE, verbose_name="Пол")
+    rus_passport = models.BooleanField(verbose_name='Наличие Гражданства РФ')
+    insurance = models.BooleanField(verbose_name='Наличие медицинской страховки')
+    status = models.BooleanField(default=False, verbose_name='Активна?')  # False - удалена, True - действует
+    salary = models.IntegerField(blank=True, null=True, verbose_name="Оплата труда")
+    date_start = models.DateTimeField(verbose_name="Начало работы", db_comment="Начальное время работы")
+    date_end = models.DateTimeField(verbose_name="Конец работы", db_comment="Конечное время работы")
 
-#     class Meta:
-#         managed = False
-#         db_table = 'bid'
-#         verbose_name = 'Заявка'
-#         verbose_name_plural = 'Заявки'
-#         ordering = ['date_create']
+    class Meta:
+        managed = True
+        db_table = 'Service'
+        verbose_name = 'Услуга'
+        verbose_name_plural = 'Услуги'
 
-#     def __str__(self):
-#         return self.pk
-
-
-# class BidRecordAdmin(admin.ModelAdmin):
-#     list_display = ('service', 'bid')
-
-
-# class BidRecord(models.Model):
-#     service = models.ForeignKey('Services', models.DO_NOTHING, verbose_name='ID услуги')
-#     bid = models.ForeignKey(Bid, models.DO_NOTHING, verbose_name='ID заявки')
-
-#     class Meta:
-#         managed = False
-#         db_table = 'bidrecord'
-#         verbose_name = 'Заявка (вспомогательная табл.)'
-#         verbose_name_plural = 'Заявки пользователей (вспомогательная табл.)'
+    def __str__(self):
+        return self.job
 
 
-# class BidStatus(models.Model):
-#     status = models.CharField(max_length=20, blank=True, null=True, verbose_name='Название')
+class Bid(models.Model):
+    DRAFT = "draft"
+    DELETED = "deleted"
+    FORMED = "formed"
+    COMPLETED = "completed"
+    REJECTED = "rejected"
+    BID_STATUS = {
+        DRAFT: "Черновик",
+        DELETED: "Удалено",
+        FORMED: "Сформировано",
+        COMPLETED: "Завершено",
+        REJECTED: "Отклонено"
+    }
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='user_bids',
+                             verbose_name='Идентификатор пользователя')
+    moderator = models.ForeignKey('User', on_delete=models.CASCADE, blank=True, null=True,
+                                  related_name='moderator_bids', verbose_name='Идентификатор модератора')
+    date_create = models.DateTimeField(blank=True, null=True,
+                                       verbose_name='Время создания')  # время добавления в корзину
+    date_formation = models.DateTimeField(blank=True, null=True,
+                                          verbose_name='Время формирования')  # время отправки модератору на рассмотрение
+    date_finish = models.DateTimeField(blank=True, null=True,
+                                       verbose_name='Время завершения')  # время рассмотрения модератором заявки
+    status = models.CharField(max_length=10, choices=BID_STATUS, default=DRAFT, verbose_name='Статус')
+    services = models.ManyToManyField('Service', db_table='ServiceBid', blank=True, verbose_name="Услуги")
 
-#     class Meta:
-#         managed = False
-#         db_table = 'bidstatus'
-#         verbose_name = 'Статус заявки'
-#         verbose_name_plural = 'Статусы заявок'
+    class Meta:
+        managed = True
+        db_table = 'Bid'
+        verbose_name = 'Заявка'
+        verbose_name_plural = 'Заявки'
+        ordering = ['date_create']
 
-
-# class ServicesAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'job', 'about', 'age', 'rus_passport', 'insurance', 'status')
-#     list_display_links = ('id', 'job')
-#     search_fields = ('job', 'about')
-#     list_editable = ('status', 'rus_passport', 'insurance')
-#     list_filter = ('status', )
-
-
-# class Services(models.Model):
-#     job = models.CharField(max_length=50, verbose_name='Название профессии')
-#     img = models.ImageField(upload_to="users/", verbose_name='Фотография')
-#     about = models.TextField(blank=True, null=True, verbose_name='О работе')
-#     age = models.IntegerField(verbose_name='Возраст')
-#     rus_passport = models.BooleanField(blank=True, null=True, verbose_name='Наличие Российского Гражданства')
-#     insurance = models.BooleanField(blank=True, null=True, verbose_name='Наличие мед. страховки')
-#     status = models.CharField(max_length=15, blank=True, null=True, verbose_name='Статус')
-
-#     class Meta:
-#         managed = False
-#         db_table = 'services'
-#         verbose_name = 'Услуга'
-#         verbose_name_plural = 'Услуги'
-
-#     def __str__(self):
-#         return self.job
-
-#     def get_absolute_url(self):
-#         return reverse('service', kwargs={'service_id': self.pk})
+    def __str__(self):
+        return self.user.username
 
 
-# class UsersAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'name', 'surname', 'isAdmin')
-#     search_fields = ('name', 'surname')
-#     list_editable = ('isAdmin', )
-#     list_filter = ('isAdmin', )
+# Для админки
+class BidAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'moderator', 'date_create', 'date_formation', 'date_finish', 'status')
+    list_filter = ('date_create', 'date_formation', 'date_finish', 'status')
 
 
-# class Users(models.Model):
-#     name = models.CharField(max_length=20, verbose_name='Имя')
-#     surname = models.CharField(max_length=20, verbose_name='Фамилия')
-#     isAdmin = models.BooleanField(default=False, blank=True, null=True, verbose_name='Является модератором')
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = (
+    'id', 'job', 'img', 'about', 'age', 'sex', 'rus_passport', 'insurance', 'salary', 'status', 'date_start',
+    'date_end')
+    list_display_links = ('job',)
+    search_fields = ('job', 'about')
+    list_editable = ('status', 'rus_passport', 'insurance', 'salary')
+    list_filter = ('status', 'rus_passport', 'date_start', 'date_end')
 
-#     class Meta:
-#         managed = False
-#         db_table = 'users'
-#         verbose_name = 'Пользователь'
-#         verbose_name_plural = 'Пользователи'
 
-#     def __str__(self):
-#         return self.name
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('id', 'username', 'name', 'surname', 'email', 'phone', 'isAdmin')
+    search_fields = ('username', 'email', 'phone')
+    list_editable = ('isAdmin', 'name', 'surname', 'email', 'phone')
+    list_filter = ('isAdmin',)
+
