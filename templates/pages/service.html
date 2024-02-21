@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block contentPage %}
+
+    <a href="{% url 'home'%}">
+        <button class="btn-home btn">Hазад</button>
+    </a>
+
+    <div class="card-service-page2">
+
+        <div class="card-service-img-page2">
+            <img src="{{ service.img.url }}" alt="employee" class="card-service-img-employee-page2">
+        </div>
+
+        <div class="card-service-data">
+            <div class="card-service-about-title">{{ service.job }}</div>
+
+            <div class="card-service-short-info-about card-title">Описание</div>
+            <div class="card-service-short-info-about-ans card-title-ans">{{ service.about }}</div>
+
+            <div class="card-service-short-info-age card-title">Возрастные ограничения:</div>
+            <div class="card-service-short-info-age-ans card-title-ans">{{ service.age }}+</div>
+
+            <div class="card-service-short-info-salary card-title">Заработная плата:</div>
+            <div class="card-service-short-info-salary-ans card-title-ans">{{ service.salary }}</div>
+
+            <div class="card-service-short-info-sex card-title card-title">Пол:</div>
+            <div class="card-service-short-info-sex-ans card-title-ans">
+                {% if service.sex == 'M' %}
+                    Мужской
+                {% elif service.sex == 'F' %}
+                    Женский 
+                {% else %}
+                    Не важно
+                {% endif %}
+            </div>
+
+            <div class="card-service-short-info-date-start card-title">Начало работы:</div>
+            <div class="card-service-short-info-date-start-ans card-title-ans">{{ service.date_start }}</div>
+
+            <div class="card-service-short-info-date-end card-title">Конец работы:</div>
+            <div class="card-service-short-info-date-end-ans card-title-ans">{{ service.date_end }}</div>
+
+            <div class="card-service-short-info-rus card-title">Наличие русского гражданства:</div>
+            <div class="card-service-short-info-rus-ans card-title-ans">
+                {% if service.rus_passport %}
+                    Обязательно
+                {% else %}
+                    Не обязательно
+                {% endif %}
+            </div>
+            <div class="card-service-short-info-ins card-title">Наличие медицинской страховки:</div>
+            <div class="card-service-short-info-ins-ans card-title-ans title-last-ans">
+                {% if service.insurance %}
+                    Обязательно
+                {% else %}
+                    Не обязательно
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

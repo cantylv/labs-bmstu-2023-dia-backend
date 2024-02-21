@@ -26,11 +26,11 @@ class Service(models.Model):
     MALE = "M"
     FEMALE = "F"
     ANYONE = "A"
-    SEX = {
-        MALE: "Мужской",
-        FEMALE: "Женский",
-        ANYONE: "Любой"
-    }
+    SEX = [
+        (MALE, "Мужской"),
+        (FEMALE, "Женский"),
+        (ANYONE, "Любой")
+    ]
     job = models.CharField(max_length=150, verbose_name='Название профессии')
     img = models.ImageField(upload_to="users/", blank=True, verbose_name='Фотография')
     about = models.TextField(verbose_name='Описание работы')
@@ -39,7 +39,7 @@ class Service(models.Model):
     sex = models.CharField(max_length=1, choices=SEX, default=ANYONE, verbose_name="Пол")
     rus_passport = models.BooleanField(verbose_name='Наличие Гражданства РФ')
     insurance = models.BooleanField(verbose_name='Наличие медицинской страховки')
-    status = models.BooleanField(default=False, verbose_name='Активна?')  # False - удалена, True - действует
+    status = models.BooleanField(default=True, verbose_name='Активна?')  # False - удалена, True - действует
     salary = models.IntegerField(blank=True, null=True, verbose_name="Оплата труда")
     date_start = models.DateTimeField(verbose_name="Начало работы", db_comment="Начальное время работы")
     date_end = models.DateTimeField(verbose_name="Конец работы", db_comment="Конечное время работы")
@@ -60,13 +60,13 @@ class Bid(models.Model):
     FORMED = "formed"
     COMPLETED = "completed"
     REJECTED = "rejected"
-    BID_STATUS = {
-        DRAFT: "Черновик",
-        DELETED: "Удалено",
-        FORMED: "Сформировано",
-        COMPLETED: "Завершено",
-        REJECTED: "Отклонено"
-    }
+    BID_STATUS = [
+        (DRAFT, "Черновик"),
+        (DELETED, "Удалено"),
+        (FORMED, "Сформировано"),
+        (COMPLETED, "Завершено"),
+        (REJECTED, "Отклонено")
+    ]
     user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='user_bids',
                              verbose_name='Идентификатор пользователя')
     moderator = models.ForeignKey('User', on_delete=models.CASCADE, blank=True, null=True,

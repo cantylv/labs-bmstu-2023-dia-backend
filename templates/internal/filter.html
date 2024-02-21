@@ -1,0 +1,32 @@
+<div class="filter">
+    <div class="sorting-controls">
+        <form action="{% url 'home' %}" method="get">
+            <span class="sort-label">Фильтры</span>
+            <span class="label-sorting">Отсортировать:</span>
+            <input type="hidden" name="catalog" value="{{ request.GET.catalog }}">
+            <input type="hidden" name="page" value="{{ request.GET.page }}">
+
+            {% if request.GET.job %}
+                <input type="hidden" placeholder="Поиск" name="job" value="{{ request.GET.job }}">
+            {% elif request.GET.name %}
+                <input type="hidden" placeholder="Поиск" name="name" value="{{ request.GET.name }}">
+            {% endif %}
+
+            <select id="sort-options" name="sorted">
+                <option value="name"
+                        {% if request.GET.sorted == "name" %}selected{% endif %}>По имени
+                </option>
+                <option value="price_asc"
+                        {% if request.GET.sorted == "price_asc" %}selected{% endif %}>
+                    По возрастанию стоимости
+                </option>
+                <option value="price_desc"
+                        {% if request.GET.sorted == "price_desc" %}selected{% endif %}>
+                    По убыванию стоимости
+                </option>
+            </select>
+
+            <button type="submit" class="sort-button card-order-btn-submit">Показать результат</button>
+        </form>
+    </div>
+</div>
