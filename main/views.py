@@ -1,11 +1,16 @@
+# Для аутентификации/авторизации
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import *
+from .permission import *  # кастомные ограничения на использование api
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import AnonymousUser
+
 # Для работы с DRF
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from .serializers import *
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
-from django.contrib.auth import authenticate, login, logout
-
 
 # Для работы с БД
 from .models import *
@@ -28,11 +33,16 @@ import uuid
 import datetime
 import redis
 from django.conf import settings
+from .authentication import RedisSessionAuthentication
+
+session_storage = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+
 
 # Функции для проверки валидности введеных данных
 def validate_service(service_id):
     service = get_object_or_404(Service, pk=service_id)
     return service
+
 
 ########################################    SWAGGER    ################################################################
 
@@ -72,9 +82,24 @@ success_add_data = 'Данные были успешно добавлены'
 
 
 ########################################################################################################################
+
+
+def method_permission_classes(classes):
+    def decorator(func):
+        def decorated_func(self, *args, **kwargs):
+            self.permission_classes = classes
+            self.check_permissions(self.request)
+            return func(self, *args, **kwargs)
+
+        return decorated_func
+
+    return decorator
+
+
 class ServiceList(APIView):
     model_class = Service
     serializer_class = ServiceSerializer
+    authentication_classes = [RedisSessionAuthentication]
 
     ### Получение списка услуг. Это может сделать любой пользователь, в том числе незарегистрированный ###
     @swagger_auto_schema(
@@ -108,11 +133,11 @@ class ServiceList(APIView):
         response_data = {
             "services": serializer.data
         }
-        if req.user.is_authenticated:
+        if req.user != AnonymousUser:
             draft = Bid.objects.filter(Q(status='draft') & Q(user=req.user))
             if draft.exists():
                 response_data["draft_id"] = draft[0].id
-        return Response(response_data, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK, content_type='application/json')
 
     ### Создание услуги админом ###
     @swagger_auto_schema(
@@ -129,6 +154,7 @@ class ServiceList(APIView):
                 properties={
                     'detail': Schema(type=TYPE_STRING, description=bad_user_permission)})
         })
+    @method_permission_classes([IsAdmin])
     def post(self, req):
         uploaded_file = None
         if 'img' in req.data:
@@ -190,6 +216,7 @@ class ServiceDetail(APIView):
                 properties={
                     'detail': Schema(type=TYPE_STRING, description=data_not_found)})
         })
+    @method_permission_classes([IsAdmin])
     def put(self, req, service_id):
         service = validate_service(service_id)
         if not service.status:
@@ -230,6 +257,7 @@ class ServiceDetail(APIView):
                 properties={
                     'detail': Schema(type=TYPE_STRING, description=data_not_found)})
         })
+    @method_permission_classes([IsAdmin])
     def delete(self, req, service_id):
         service = validate_service(service_id)
         print(model_to_dict(service))
@@ -262,6 +290,7 @@ class ServiceDetail(APIView):
                 'detail': Schema(type=TYPE_STRING, description=data_not_found)})
     })
 @api_view(['POST'])
+@permission_classes([IsUser])
 def AddServiceToDraft(req, service_id):
     service = validate_service(service_id)
     if not service.status:
@@ -301,6 +330,7 @@ def AddServiceToDraft(req, service_id):
                 'detail': Schema(type=TYPE_STRING, description=data_not_found)})
     })
 @api_view(['DELETE'])
+@permission_classes([IsUser])
 def DeleteServiceFromDraft(req, service_id, bid_id):
     service = validate_service(service_id)
     if not service.status:
@@ -330,6 +360,7 @@ def DeleteServiceFromDraft(req, service_id, bid_id):
 class BidList(APIView):
     model_class = Bid
     serializer_class = BidSerializer
+    permission_classes = ([IsAuth])
 
     ### Получение списка заявок. Запрашивается список заявок ###
     ### В котором находится одна заявка-черновик (при наличии таковой). Доступно только авторизованному пользователю ###
@@ -346,12 +377,30 @@ class BidList(APIView):
         manual_parameters=parameters_get_list_services
     )
     def get(self, req):
+        try:
+            session_id = req.COOKIES.get('session_id')
+
+            user_id = int(session_storage.get(session_id))
+            user = CustomUser.objects.get(pk=user_id)
+
+            is_moderator = user.is_superuser
+        except CustomUser.DoesNotExist:
+            return Response({"detail": error_bad_request}, status=status.HTTP_400_BAD_REQUEST)
 
         date_start = req.GET.get('date_start', None)
         date_end = req.GET.get('date_end', None)
         get_status = req.GET.get('status', None)
 
-        object_list = self.model_class.objects.all()
+        if is_moderator:
+            object_list = self.model_class.objects.exclude(Q(status='draft') | Q(status='deleted'))
+
+            if get_status not in ('formed', 'rejected', 'completed', None):
+                return Response({"detail": error_incorrect_status}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            object_list = self.model_class.objects.filter(user=user)
+
+            if get_status not in ('formed', 'draft', 'rejected', 'completed', None):
+                return Response({"detail": error_incorrect_status}, status=status.HTTP_400_BAD_REQUEST)
 
         if get_status:
             object_list = object_list.filter(status=get_status)
@@ -368,6 +417,7 @@ class BidList(APIView):
 class BidDetail(APIView):
     model_class = Bid
     serializer_class = BidSerializer
+    permission_classes = ([IsAuth])
 
     # Получение данных заявки менеджером или админом
 
@@ -392,16 +442,36 @@ class BidDetail(APIView):
                     'detail': Schema(type=TYPE_STRING, description=data_not_found)}),
         })
     def get(self, req, bid_id):
+        try:
+            session_id = req.COOKIES.get('session_id')
+
+            user_id = int(session_storage.get(session_id))
+            user = CustomUser.objects.get(pk=user_id)
+
+            is_moderator = user.is_superuser
+        except CustomUser.DoesNotExist:
+            return Response({"detail": error_bad_request}, status=status.HTTP_400_BAD_REQUEST)
 
         bid = get_object_or_404(self.model_class, pk=bid_id)
 
+        if is_moderator:
+            if bid.status not in ('formed', 'rejected', 'completed'):
+                return Response({"detail": error_bid_doesnt_exist}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if bid.status not in ('formed', 'draft', 'rejected', 'completed'):
+                return Response({"detail": error_bid_doesnt_exist}, status=status.HTTP_400_BAD_REQUEST)
+            if bid.user.id != user.id:
+                return Response({"detail": bad_user_permission}, status=status.HTTP_403_FORBIDDEN)
         serializer = self.serializer_class(bid)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # Удаление заявки
+    @method_permission_classes([IsUser])
     def delete(self, req, bid_id):
         try:
             bid = Bid.objects.get(pk=bid_id)
+            if bid.user is not req.user:
+                return Response({"detail": bad_user_permission}, status=status.HTTP_403_FORBIDDEN)
             bid.status = 'deleted'
             bid.save()
             return Response({"detail": remove_success}, status=status.HTTP_204_NO_CONTENT)
@@ -435,19 +505,44 @@ class BidDetail(APIView):
                 'detail': Schema(type=TYPE_STRING, description=data_not_found)})
     })
 @api_view(['PUT'])
+@permission_classes([IsAuth])
 def ChangeBidStatus(req, bid_id):
-    new_status = req.GET.get('status', None)
     bid = get_object_or_404(Bid, pk=bid_id)
-    if new_status in ('completed', 'rejected'):
+    try:
+        session_id = req.COOKIES.get('session_id')
+
+        user_id = int(session_storage.get(session_id))
+        if user_id is None:
+            return Response({"detail": bad_user_permission}, status=status.HTTP_403_FORBIDDEN)
+
+        user = CustomUser.objects.get(pk=user_id)
+        is_moderator = user.is_superuser
+    except CustomUser.DoesNotExist:
+        return Response({"detail": data_not_found}, status=status.HTTP_404_NOT_FOUND)
+
+    new_status = req.GET.get('status', None)
+
+    if is_moderator:
+        if bid.status != 'formed':
+            return Response({"detail": data_not_found}, status=status.HTTP_404_NOT_FOUND)
+
+        if new_status not in ('rejected', 'completed'):
+            return Response({"detail": error_incorrect_status}, status=status.HTTP_400_BAD_REQUEST)
+
         bid.date_finish = timezone.now()
         bid.moderator = req.user
+    else:
+        if new_status not in ('formed', 'deleted'):
+            return Response({"detail": error_incorrect_status}, status=status.HTTP_400_BAD_REQUEST)
+        if bid.user.id != user.id:
+            return Response({"detail": bad_user_permission}, status=status.HTTP_403_FORBIDDEN)
 
-    if new_status == 'formed':
-        bid.date_formation = timezone.now()
+        if new_status == 'formed':
+            bid.date_formation = timezone.now()
 
     bid.status = new_status
-    bid.save()
 
+    bid.save()
     serializer = BidSerializer(bid)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -486,6 +581,7 @@ class PictureImage(APIView):
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @method_permission_classes([IsAdmin])
     def put(self, req, service_id):
         try:
             service = Service.objects.get(pk=service_id)
@@ -525,13 +621,21 @@ class PictureImage(APIView):
         )
     })
 @api_view(['POST'])
+@permission_classes([IsAnonymous])
 def UserLogin(req):
     get_username = req.data.get("username", ' ')
     get_password = str(req.data.get("password", ' '))
     user = authenticate(req, username=get_username, password=get_password)
     if user is not None:
-        login(req, user)
-        return Response({"detail": success_authorization}, status=status.HTTP_200_OK)
+        session_key = str(uuid.uuid4())
+        session_storage.set(session_key, user.id)
+
+        response = Response(model_to_dict(user), status=status.HTTP_200_OK)
+
+        # Вычисляем текущую дату и добавляем 14 дней к текущей дате
+        expiration_date = datetime.datetime.now() + datetime.timedelta(days=14)
+        response.set_cookie("session_id", session_key, expires=expiration_date)  # 14 дней
+        return response
     else:
         return Response({"detail": error_bad_request}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -555,11 +659,14 @@ def UserLogin(req):
         )
     })
 @api_view(['POST'])
+@permission_classes([IsAuth])
 def UserLogout(req):
     session_key = req.COOKIES.get("session_id")
-    if req.user.is_authenticated:
-        logout(req)
-        return Response({"detail": success_logout}, status=status.HTTP_200_OK)
+    if session_storage.exists(session_key):
+        session_storage.delete(session_key)
+        response = Response({'detail': success_logout}, status=status.HTTP_200_OK)
+        response.delete_cookie("session_id")
+        return response
     return Response({'detail': error_bad_request}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -568,9 +675,11 @@ class UserViewSet(viewsets.ModelViewSet):
     Класс, описывающий методы работы с пользователями
     Осуществляет связь с таблицей пользователей в базе данных
     """
-    queryset = User.objects.all()
+    queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
-    model_class = User
+    model_class = CustomUser
+    authentication_classes = []
+    permission_classes = [IsAnonymous]
 
     @swagger_auto_schema(
         request_body=UserSerializer,
@@ -596,18 +705,29 @@ class UserViewSet(viewsets.ModelViewSet):
 
         serializer = self.serializer_class(data=req.data)
         if serializer.is_valid():
-            is_moderator = serializer.data.get('isAdmin', False)
+            is_moderator = serializer.data.get('is_superuser', False)
             response_user = None
             if is_moderator:
-                user = self.model_class.objects.create_superuser(**dict(serializer.data))
+                user = CustomUser.objects.create_superuser(**dict(serializer.data))
                 response_user = user
+                if not is_moderator:
+                    user.is_superuser = False
+                    user.save()
             else:
-                user = self.model_class.objects.create_user(**dict(serializer.data))
+                user = CustomUser.objects.create_user(**dict(serializer.data))
                 response_user = user
 
-            login(req, response_user)
+            # сессия пользователя
+            session_key = str(uuid.uuid4())
+            session_storage.set(session_key, user.id)
+
+            # Вычисляем текущую дату и добавляем 14 дней к текущей дате
+            expiration_date = datetime.datetime.now() + datetime.timedelta(days=14)
 
             response = Response(model_to_dict(response_user), status=status.HTTP_200_OK,
                                 content_type='application/json')
+            response.set_cookie("session_id", session_key, expires=expiration_date)  # 14 дней
+
             return response
+
         return Response({"detail": error_bad_request}, status=status.HTTP_400_BAD_REQUEST)
