@@ -40,7 +40,7 @@ urlpatterns = [
    path(rf'{api_version}/logout/', UserLogout, name='Logout'),  # выход из системы = удаление cookie авторизации
 
    ### Домен м-м ###
-   path(rf'{api_version}/delete_service/<int:service_id>/bid/<int:bid_id>/', DeleteServiceFromDraft, name='DeleteServicesFromDraft'),  # удаление услуги из черновика
+   path(rf'{api_version}/delete_service/<int:service_id>/bids/<int:bid_id>/', DeleteServiceFromDraft, name='DeleteServicesFromDraft'),  # удаление услуги из черновика
 
    ### Документация ###
    path('swagger/', schema_view.with_ui(), name='schema-swagger-ui')  # документация API v1

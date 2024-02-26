@@ -1,6 +1,5 @@
 # Для аутентификации/авторизации
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import *
 from .permission import *  # кастомные ограничения на использование api
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser
@@ -22,7 +21,6 @@ from django.shortcuts import get_object_or_404
 # Для работы с minio
 from .minio import SavePictureMinio, GetPictureMinio, DeletePictureMinio
 from django.http import HttpResponse
-import json
 
 # Для работы с Swagger
 from drf_yasg.utils import swagger_auto_schema
@@ -202,7 +200,7 @@ class ServiceDetail(APIView):
         request_body=serializer_class,
         operation_description="Изменение услуги админом",
         responses={
-            206: serializer_class,
+            200: serializer_class,
             400: Schema(
                 type=TYPE_OBJECT,
                 properties={
@@ -222,21 +220,20 @@ class ServiceDetail(APIView):
         if not service.status:
             return Response({"detail": data_not_found}, status=status.HTTP_404_NOT_FOUND)
 
-        change_img = False
         uploaded_file = None
         if 'img' in req.data:
-            change_img = True
             uploaded_file = req.data['img']
-            req.data['img'] = 'pass'
+            req.data['img'] = service.img
 
         serializer = self.serializer_class(service, data=req.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            if change_img:
+            if uploaded_file:
+                DeletePictureMinio(service)
                 result = SavePictureMinio(service, uploaded_file)
                 if 'errors' in result.data:
                     return result
-            return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     ### Удаление услуги админом ###
@@ -260,7 +257,6 @@ class ServiceDetail(APIView):
     @method_permission_classes([IsAdmin])
     def delete(self, req, service_id):
         service = validate_service(service_id)
-        print(model_to_dict(service))
         if not service.status:
             return Response({"detail": data_not_found}, status=status.HTTP_404_NOT_FOUND)
 
@@ -270,7 +266,11 @@ class ServiceDetail(APIView):
         # if 'errors' in result.data:
         #     return result
         service.save()
-        return Response({"detail": remove_success}, status=status.HTTP_204_NO_CONTENT)
+
+        services = self.model_class.objects.filter(status=True)
+        serializer = self.serializer_class(services)
+        serializer.is_valid()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 ### Добавление услуги в заявку. Доступно только пользователю ###
@@ -350,11 +350,9 @@ def DeleteServiceFromDraft(req, service_id, bid_id):
     if service in bid.services.all():
         bid.services.remove(service)
         serializer = BidSerializer(bid)
-        # if not bid.services.all().count():
-        #     bid.delete()
-        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    return Response({"detail": error_service_not_in_bid}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({"detail": error_service_not_in_bid}, status=status.HTTP_200_OK)
 
 
 class BidList(APIView):
@@ -390,6 +388,7 @@ class BidList(APIView):
         date_start = req.GET.get('date_start', None)
         date_end = req.GET.get('date_end', None)
         get_status = req.GET.get('status', None)
+        username = req.GET.get('username', None)
 
         if is_moderator:
             object_list = self.model_class.objects.exclude(Q(status='draft') | Q(status='deleted'))
@@ -397,7 +396,7 @@ class BidList(APIView):
             if get_status not in ('formed', 'rejected', 'completed', None):
                 return Response({"detail": error_incorrect_status}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            object_list = self.model_class.objects.filter(user=user)
+            object_list = self.model_class.objects.exclude(status='deleted').filter(user=user)
 
             if get_status not in ('formed', 'draft', 'rejected', 'completed', None):
                 return Response({"detail": error_incorrect_status}, status=status.HTTP_400_BAD_REQUEST)
@@ -408,6 +407,8 @@ class BidList(APIView):
             object_list = object_list.filter(date_formation__gte=date_start)
         if date_end:
             object_list = object_list.filter(date_formation__lte=date_end)
+        if username:
+            object_list = object_list.filter(user__username=username)
 
         serializer = self.serializer_class(object_list, many=True)
 
@@ -702,7 +703,6 @@ class UserViewSet(viewsets.ModelViewSet):
     def create(self, req, *args, **kwargs):
         if self.model_class.objects.filter(username=req.data['username']).exists():
             return Response({'detail': error_user_already_exist}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.serializer_class(data=req.data)
         if serializer.is_valid():
             is_moderator = serializer.data.get('is_superuser', False)
