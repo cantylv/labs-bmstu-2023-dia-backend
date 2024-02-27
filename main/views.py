@@ -88,7 +88,6 @@ def method_permission_classes(classes):
             self.permission_classes = classes
             self.check_permissions(self.request)
             return func(self, *args, **kwargs)
-
         return decorated_func
 
     return decorator
