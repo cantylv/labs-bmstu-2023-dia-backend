@@ -12,13 +12,20 @@ def home(req):
     return render(req, 'pages/index.html', {
         'services': object_list,
         'GET_PARAMS': GET_PARAMS,
-        'draft': Draft,
-        'countServicesInDraft': len(Draft)
+        'countServicesInDraft': len(Draft.get('services'))
     })
 
 
 def service(req, service_id):
     currentService = Services[service_id]
     return render(req, 'pages/service.html', {
-        'service': currentService
+        'service': currentService,
+        'countServicesInDraft': len(Draft.get('services'))
+    })
+
+
+def draft(req):
+    return render(req, 'pages/draft.html', {
+        'draft': Draft,
+        'countServicesInDraft': len(Draft.get('services'))
     })

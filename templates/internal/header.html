@@ -6,7 +6,7 @@
             <img src="{% static 'svg/logo.svg' %}" alt="logo" >
         </a>
         <span class="trashBlock">
-            <a href="{% url 'draft' %}">
+            <a href="{% url 'draft' %}" class="trashBlock">
                 <span>Корзина</span>
                 <img src="{% static 'img/trash.png' %}" class="imgTrash" alt="trash"/>
                 <span class="badgeTrash">{{ countServicesInDraft }}</span>

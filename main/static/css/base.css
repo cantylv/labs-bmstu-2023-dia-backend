@@ -59,6 +59,13 @@ body {
     height: auto;
 }
 
+.breadcrumbs-link {
+    color: blue;
+}
+
+.breadcrumbs{
+    font-size: 20px;
+}
 
 .trashBlock:hover {
     cursor: pointer;
@@ -294,3 +301,133 @@ label {
 .title-last-ans {
     margin-bottom: 20px;
 }
+
+.title {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+
+/* Стили для таблицы заявки*/
+  .styled-table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid #ddd;
+  }
+
+  .text-center {
+  }
+
+  /* Стили для заголовков таблицы */
+  .styled-table th {
+    background-color: #f2f2f2;
+    color: #333;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+  }
+
+  /* Стили для ячеек таблицы */
+  .styled-table td {
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+  }
+
+  /* Стили для четных строк */
+  .styled-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+
+  /* Стили для таблицы услуг*/
+  .services-table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid #ddd;
+  }
+
+  /* Стили для заголовков таблицы */
+  .services-table th {
+    background-color: #f2f2f2;
+    color: #333;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+  }
+
+  /* Стили для ячеек таблицы */
+  .services-table td {
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+  }
+
+  /* Стили для четных строк */
+  .services-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  /* Стили для кнопок действий */
+  .services-table .action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .trashServiceHeader {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+  }
+
+  .btn-formed {
+      margin-bottom: 0!important;
+  }
+
+  .action {
+      margin-right: 20px;
+  }
+
+  /* Стили для кнопок */
+  .btn {
+    display: inline-block;
+    font-weight: 400;
+    color: #fff;
+    text-align: center;
+    vertical-align: middle;
+    user-select: none;
+    background-color: #28a745; /* Цвет фона для класса btn-success */
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+  }
+
+  /* Стили для кнопок с классом btn-success */
+  .btn-success {
+    background-color: #28a745; /* Цвет фона для класса btn-success */
+    border-color: #28a745; /* Цвет границы для класса btn-success */
+  }
+
+  /* Стили при наведении на кнопку */
+  .btn:hover {
+    background-color: #218838; /* Изменение цвета фона при наведении */
+    border-color: #1e7e34; /* Изменение цвета границы при наведении */
+  }
+
+  /* Стили при нажатии на кнопку */
+  .btn:active,
+  .btn.active {
+    background-color: #1e7e34; /* Изменение цвета фона при нажатии */
+    border-color: #1c7430; /* Изменение цвета границы при нажатии */
+  }
+
+

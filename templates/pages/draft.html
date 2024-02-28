@@ -1,10 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block contentPage %}
+
+<div class="container">
+  <div class="breadcrumbs">
+      <span>Вы сейчас здесь: </span>
+      <a href="{% url 'draft' %}" class="breadcrumbs-link">Мои заявки/Черновик</a>
+  </div>
+
+
+  <h3 class="title">Данные рассматриваемой заявки</h3>
+
+  <div class="bid">
+    <!-- Таблица для данных заявки -->
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th >Статус</th>
+          <th>Дата создания</th>
+          <th >Дата формирования</th>
+          <th >Дата завершения</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <!-- Значения для соответствующих столбцов -->
+          <td >{{ draft.status }}</td>
+          <td >{{ draft.date_create }}</td>
+          <td >{{ draft.date_formation }}</td>
+          <td >{{ draft.date_finish }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Кнопка "Сформировать" -->
+    <div class="trashServiceHeader mt-5">
+      <h3 class="title">Список видов деятельностей</h3>
+      <button class="btn btn-success btn-formed">Сформировать</button>
+    </div>
+
+    <!-- Таблица для списка услуг -->
+    <table class="services-table">
+      <thead>
+        <tr>
+          <th >Название</th>
+          <th>Возраст</th>
+          <th >Пол</th>
+          <th>Наличие Российского Гражданства</th>
+          <th>Наличие страховки</th>
+          <th >Зарплата</th>
+          <th >Время начала работы</th>
+          <th >Время окончания работы</th>
+          <th >Действия</th>
+          <th>Описание</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Цикл для вывода данных услуг -->
+        {% for service in draft.services %}
+        <tr>
+          <td >{{ service.job }}</td>
+          <td>{{ service.age }}+</td>
+          <td >{% if service.sex == 'A' %}Не важно{% elif service.sex == 'M' %}Мужской{% else %}Женский{% endif %}</td>
+          <td >{% if service.rus_passport %}Необходимо{% else %}Нет необходимости{% endif %}</td>
+          <td >{% if service.insurance %}Необходимо{% else %}Нет необходимости{% endif %}</td>
+          <td>{{ service.salary }}</td>
+          <td>{{ service.date_start }}</td>
+          <td >{{ service.date_end }}</td>
+          <td>
+            <!-- Кнопка "Карточка услуги" -->
+            <a href="{% url 'service' service_id=service.id %}">
+                <button class="btn btn-success action">Карточка услуги</button>
+            </a>
+            <!-- Кнопка "Удалить" -->
+            <button class="btn btn-success action">Удалить</button>
+          </td>
+          <td >{{ service.about }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
