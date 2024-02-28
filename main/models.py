@@ -1,67 +1,70 @@
 # Локальная база данных
 import random
+from django.conf import settings
+
+baseDir = settings.BASE_DIR
 
 # УСЛУГИ
 Jobs = [
     {
         'name': 'Программирование',
-        'uploads': 'img/professions/prog.jpg'
+        'uploads': f'/static/img/services/prog.jpg'
     },
     {
         'name': 'Массаж',
-        'uploads': 'img/professions/massage.jpg'
+        'uploads': '/static/img/services/massage.jpg'
     },
     {
         'name': 'Сантехнические работы',
-        'uploads': 'img/professions/santechnik.jpg'
+        'uploads': '/static/img/services/santechnik.jpg'
     },
     {
         'name': 'Автомойка',
-        'uploads': 'img/professions/wash_car.jpg'
+        'uploads': '/static/img/services/wash_car.jpg'
     },
     {
         'name': 'Ветеринария',
-        'uploads': 'img/professions/veterinar.jpg'
+        'uploads': '/static/img/services/veterinar.jpg'
     },
     {
         'name': 'Медицина',
-        'uploads': 'img/professions/urolog.jpg'
+        'uploads': '/static/img/services/urolog.jpg'
     },
     {
         'name': 'Репетиторство',
-        'uploads': 'img/professions/teacher.jpg'
+        'uploads': '/static/img/services/teacher.jpg'
     },
     {
         'name': 'Юриспруденция',
-        'uploads': 'img/professions/jurist.jpg'
+        'uploads': '/static/img/services/jurist.jpg'
     },
     {
         'name': 'Охрана и безопасность',
-        'uploads': 'img/professions/security.png'
+        'uploads': '/static/img/services/security.png'
     },
     {
         'name': 'Аналитика данных',
-        'uploads': 'img/professions/datanal.jpg'
+        'uploads': '/static/img/services/datanal.jpg'
     },
     {
         'name': 'Финансовая помощь',
-        'uploads': 'img/professions/consultant_money.jpg'
+        'uploads': '/static/img/services/consultant_money.jpg'
     },
     {
         'name': 'Бокс',
-        'uploads': 'img/professions/traner_box.jpg'
+        'uploads': '/static/img/services/traner_box.jpg'
     },
     {
         'name': 'Фитнес',
-        'uploads': 'img/professions/fitness.jpg'
+        'uploads': '/static/img/services/fitness.jpg'
     },
     {
         'name': 'Красота и гигиена',
-        'uploads': 'img/professions/styleman.jpg'
+        'uploads': '/static/img/services/styleman.jpg'
     },
     {
         'name': 'Фотосъемки',
-        'uploads': 'img/professions/photographer.jpg'
+        'uploads': '/static/img/services/photographer.jpg'
     }
 ]
 
@@ -80,3 +83,5 @@ Services = [
         'date_end': "15.10.2023"
     } for i, job in enumerate(Jobs)
 ]
+
+Draft = Services[4:7]

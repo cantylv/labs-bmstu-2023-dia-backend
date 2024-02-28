@@ -167,13 +167,14 @@ body {
 
 .card-service-img-employee-page2 {
     height: 100%;
+    width: 600px;
 }
 
 /* Данные о сотруднике */
 .card-service-data {
     padding: 20px 20px 20px 0px;
     overflow-y: auto;
-    width: 40%;
+    width: 600px;
 }
 
 .card-service-small-data {
