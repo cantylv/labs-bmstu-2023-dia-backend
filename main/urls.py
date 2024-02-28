@@ -34,14 +34,13 @@ urlpatterns = [
    path(rf'{api_version}/bids/', BidList.as_view(), name='Bidslist'), # получение списка заявок
    path(rf'{api_version}/bids/<int:bid_id>/', BidDetail.as_view(), name='BidsDetail'),  # получение данных о заявке
    path(rf'{api_version}/bids/<int:bid_id>/new_status/', ChangeBidStatus, name='ChangeBidsStatus'),  # отклонение/принятие заявки
-
    ### Домен пользователя ###
    path(rf'{api_version}/login/',  UserLogin, name='Login'),  # авторизация пользователя
    path(rf'{api_version}/logout/', UserLogout, name='Logout'),  # выход из системы = удаление cookie авторизации
 
    ### Домен м-м ###
    path(rf'{api_version}/delete_service/<int:service_id>/bids/<int:bid_id>/', DeleteServiceFromDraft, name='DeleteServicesFromDraft'),  # удаление услуги из черновика
-
+   path(rf'{api_version}/bids/<int:bid_id>/delete_services/', DeleteAllServicesFromDraft, name='DeleteAllServicesFromDraft'),
    ### Документация ###
    path('swagger/', schema_view.with_ui(), name='schema-swagger-ui')  # документация API v1
 ]

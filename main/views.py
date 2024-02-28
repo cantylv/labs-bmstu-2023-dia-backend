@@ -167,6 +167,7 @@ class ServiceList(APIView):
             if 'errors' in result.data:
                 return result
             return Response(serializer.data, status=status.HTTP_201_CREATED, content_type='application/json')
+        print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST, content_type='application/json')
 
 
@@ -730,3 +731,14 @@ class UserViewSet(viewsets.ModelViewSet):
             return response
 
         return Response({"detail": error_bad_request}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsUser])
+def DeleteAllServicesFromDraft(req, bid_id):
+    draft = get_object_or_404(Bid, pk=bid_id)
+    if draft.services.all().count():
+        draft.services.clear()
+        return Response({"detail": "Услуги в заявке-черновике потеряны"}, status=status.HTTP_200_OK)
+    return Response({"detail": "Услуги в заявке-черновике отсутствуют"}, status=status.HTTP_200_OK)
+
