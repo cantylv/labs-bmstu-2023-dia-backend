@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block main_header %}
+    <h1 class="main_header">Каталог услуг</h1>
+{% endblock %}
+
+{% block prompt_text %}
+    <div class="prompt_text">
+        Более 200 видов деятельности и более тысячи заказчиков — предлагай свои услуги и согласовывай их с
+        модератором. Выбирай комфортные условия и работай спокойно вместе с сервисом для внештатного персонала ПодJOBка!
+    </div>
+{% endblock %}
+
+{% block filter %}
+    <div class="filter">
+        <form id="filterForm" action="{% url 'home' %}" method="get">
+            <label for="filter_input">Фильтр:</label>
+            <input type="text" name="search" id="filter_input" placeholder="Введите данные"
+                    {% if GET_PARAMS.search is not None %} value={{ GET_PARAMS.search }} {% endif %}>
+            <button type="submit" class="btn">Применить</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block contentPage %}
+    <div class="services">
+        {% for service in services %}
+            {% include "internal/service_card.html" %}
+        {% endfor %}
+    </div>
+{% endblock %}

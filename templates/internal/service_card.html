@@ -1,0 +1,40 @@
+{% load static %}
+
+
+<div class="card-service">
+
+    <div class="card-service-img">
+        <img src="{{ service.img.url }}" alt="employee" class="card-service-img-employee">
+    </div>
+
+    <div class="card-service-small-data">
+        <div class="card-service-about-title">{{ service.job }}</div>
+
+        <div class="card-service-short-info-age card-title">Необходимый возраст:</div>
+        <div class="card-service-short-info-age-ans card-title-ans">{{ service.age }}+</div>
+
+        <div class="card-service-short-info-salary card-title">Зарплата</div>
+        <div class="card-service-short-info-salary-ans card-title-ans">{{ service.salary }} RUB</div>
+
+        <div class="card-service-short-info-time-start card-title">Начало работы</div>
+        <div class="card-service-short-info-time-start-ans card-title-ans">{{ service.date_start }}</div>
+
+        <div class="card-service-short-info-time-end card-title">Конец работы</div>
+        <div class="card-service-short-info-time-end-ans card-title-ans">{{ service.date_end }}</div>
+
+    </div>
+
+
+    <div class="btns">
+        <a href="{% url 'service' service_id=service.id %}">
+            <button class="card-service-btn-submit btn">Подробнее</button>
+        </a>
+
+        <a href="{% url 'deleteService' service_id=service.id%}">
+            <button class="card-service-btn-submit btn">Удалить</button>
+        </a>
+    </div>
+
+
+</div>
+
