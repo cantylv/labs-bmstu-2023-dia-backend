@@ -42,8 +42,27 @@ body {
 
 .menu {
     display: flex;
-    justify-content: start;
+    justify-content: space-between;
     align-items: center;
+}
+
+.trashBlock {
+    margin-right: 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.imgTrash {
+    width: 50px;
+    height: auto;
+}
+
+
+.trashBlock:hover {
+    cursor: pointer;
+
 }
 
 /* ФУТЕР */
@@ -176,6 +195,8 @@ body {
     overflow-y: auto;
     width: 600px;
 }
+
+
 
 .card-service-small-data {
     padding: 20px;
