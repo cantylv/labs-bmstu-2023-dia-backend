@@ -79,9 +79,16 @@ Services = [
         'rus_passport': random.randint(0, 1),
         'insurance': random.randint(0, 1),
         'salary': 2000,
-        'date_start': "12.10.2023",
-        'date_end': "15.10.2023"
+        'date_start': "12.10.2023 в 18:00",
+        'date_end': "15.10.2023 в 15:00"
     } for i, job in enumerate(Jobs)
 ]
 
-Draft = Services[4:7]
+Draft = {
+    "services": Services[2:7],
+    "date_create": '29.02.2023 в 00:08',
+    "date_formation": '-',
+    'date_finish': '-',
+    'status': 'Черновик',
+    'user': 'tussan_pussan',
+}
