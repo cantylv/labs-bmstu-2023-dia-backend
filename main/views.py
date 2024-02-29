@@ -23,12 +23,6 @@ import json
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.openapi import Schema, Parameter, TYPE_OBJECT, TYPE_STRING, IN_QUERY, TYPE_FILE
 
-# Для работы с Redis
-import uuid
-import datetime
-import redis
-from django.conf import settings
-
 # Функции для проверки валидности введеных данных
 def validate_service(service_id):
     service = get_object_or_404(Service, pk=service_id)

@@ -32,7 +32,7 @@ class Service(models.Model):
         (ANYONE, "Любой")
     ]
     job = models.CharField(max_length=150, verbose_name='Название профессии')
-    img = models.ImageField(upload_to="users/", blank=True, verbose_name='Фотография')
+    img = models.CharField(default='http://localhost:9000/services/default.jpg', blank=True, verbose_name='Фотография')
     about = models.TextField(verbose_name='Описание работы')
     age = models.IntegerField(default=14,
                               verbose_name='Возраст')  # с 14 лет можно стать самозанятым с согласия родителей
