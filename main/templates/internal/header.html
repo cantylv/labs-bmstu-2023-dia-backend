@@ -1,0 +1,16 @@
+{% load static %}
+
+<div class="container">
+    <div class="menu">
+        <a href="{% url 'home' %}" class="menu-logo">
+            <img src="{% static 'svg/logo.svg' %}" alt="logo" >
+        </a>
+        <span class="trashBlock">
+            <a href="{% url 'draft' %}" class="trashBlock">
+                <span>Корзина</span>
+                <img src="{% static 'img/trash.png' %}" class="imgTrash" alt="trash"/>
+                <span class="badgeTrash">{{ countServicesInDraft }}</span>
+            </a>
+        </span>
+    </div>
+</div>
